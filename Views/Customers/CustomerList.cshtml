@@ -1,0 +1,363 @@
+﻿
+@{
+    ViewData["Title"] = "CustomerList";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer List</title>
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+
+<style>
+        #tblCustomer tr {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+       
+        #tblCustomer {
+            width: 1100px;
+        }
+
+        th {
+            background-color: blue;
+            color: white;
+            height: 40px;
+        }
+
+    
+</style>
+</head>
+<body>
+<button type="button" id="btnAdd" class="btn btn-primary" data-toggle="modal" data-target="#myModal">
+    Add User
+</button>
+<br/>
+<br />
+
+<h2 style="color:blue">Customer List</h2>
+<hr />
+    <table id="tblCustomer">
+        <tr>
+          
+            <th> Id</th>
+            <th>Name</th>
+            <th>Gender</th>
+            <th>State</th>
+            <th>District</th>
+            
+            
+            <th>Action</th>
+        </tr>
+    </table>
+
+
+<!-- Modal Structure -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">User Form</h5>
+                <button type="button" id="btnFormX" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                            <label for="txtname">Name</label>
+                        <input type="text" class="form-control" id="txtname" placeholder="Enter Name">
+                        <span id="checkName" style="display:none;color:red">Name is Required.</span>
+                            <span id="checkNameLength" style="display:none;color:red">Please Enter Less then 50 charector.</span>
+                    </div>
+                        <div class="form-group">
+                            <label>Gender</label><br>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="gender" id="male" value="1">
+                                <label class="form-check-label" for="male">Male</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="gender" id="female" value="2">
+                                <label class="form-check-label" for="female">Female</label>
+                            </div>
+                            <span id="checkGender" style="display:none;color:red">Please Check Your Gender.</span>
+                        </div>
+                    <div class="form-group">
+                            <label for="ddlstate">State</label>
+                            <select id="ddlstate" class="form-control" onchange="BindDistrict()">
+                            <option value="0">--select state--</option>
+                        </select>
+                            <span id="checkState" style="display:none;color:red">Please Select Your State.</span>
+                    </div>
+                    <div class="form-group">
+                            <label for="ddldistrict">District</label>
+                            <select id="ddldistrict" class="form-control">
+                                <option value="0">--select District--</option>
+                            </select>
+                            <span id="checkDistrict" style="display:none;color:red">Please Select Your District.</span>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="btnFormClose" class="btn btn-secondary" data-dismiss="modal" >Close</button>
+                    <button type="button" class="btn btn-primary" onclick="formValidation()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+   
+
+   <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+          
+            BindGrid();
+            getState();
+
+        });
+        var UserId = 0;
+        //Bind Gender Dynamicaly.
+        function getState(){
+            
+            $.ajax({
+                url:'/Customers/GetState',
+                type:'GET',
+                data:{},
+                success:function(data){
+                  
+                    for (var i = 0; i < data.length; i++) {
+                        $("#ddlstate").append($('<option></option>').html(data[i].stateName).val(data[i].id));
+
+                    }
+
+                },
+                error:function(){
+                    alert("some problem");
+                }
+
+            });
+
+        }
+
+        //Bind District state wise
+
+        function BindDistrict(){
+            
+            $.ajax({
+                url: '/Customers/GetDistrict',
+                type: 'GET',
+                async: false,
+                data: { state:$("#ddlstate").val() },
+                success: function (data) {
+                    $("#ddldistrict").find("option:gt(0)").remove();
+                    for (var i = 0; i < data.length; i++) {
+                        $("#ddldistrict").append($('<option></option>').html(data[i].districtName).val(data[i].id));
+
+                    }
+
+                },
+                error: function () {
+                    alert("some problem");
+                }
+
+            });
+        }
+
+        // JQuery Form Validation Method.
+        function formValidation(){
+            var valid = true;
+
+            // Get the form field values
+            var name = $("#txtname").val();
+            var gender = $("input[name='gender']:checked").val();
+            var state = $("#ddlstate").val();
+            var district = $("#ddldistrict").val();
+
+            // Check Name
+            if (name == "" || name == undefined) {
+                $("#checkName").show();
+                valid = false;
+            } else {
+                $("#checkName").hide();
+            }
+
+            if (name.length > 50 ) {
+                $("#checkNameLength").show();
+                valid = false;
+            } else {
+                $("#checkNameLength").hide();
+            }
+
+
+            // Check Gender
+            if (gender == "" || gender == undefined) {
+                $("#checkGender").show();
+                valid = false;
+            } else {
+                $("#checkGender").hide();
+            }
+
+            // Check State
+            if (state == 0 || state == undefined) {
+                $("#checkState").show();
+                valid = false;
+            } else {
+                $("#checkState").hide();
+            }
+
+            // Check District
+            if (district == 0 || district == undefined) {
+                $("#checkDistrict").show();
+                valid = false;
+            } else {
+                $("#checkDistrict").hide();
+            }
+
+            // Execute SaveData only if all fields are valid
+            if (valid) {
+                SaveData(name, gender, state, district);
+            } else {
+                // Nothing to do if the form is not valid
+            }
+        }
+
+        // this is CustomerList
+        function BindGrid() {
+            
+            $.ajax({
+                url: '/Customers/GetCustomer',
+                type: 'Get',
+                data: {},
+                success: function (data) {
+                   
+                 if(data!=null){
+                    const formattedData = data.map(item => ({
+                        id: item.id,
+                        name: item.name,
+                        genderId: item.genderId,
+                        stateName: item.state ? item.state.stateName : 'N/A',
+                        districtName: item.district ? item.district.districtName : 'N/A'
+                    }));
+                   
+                    $("#tblCustomer").find("tr:gt(0)").remove();
+                    for (var i = 0; i < formattedData.length; i++) {
+
+                        var genderName = formattedData[i].genderId==1?'Male':'Female';
+                        $("#tblCustomer").append('<tr>  <td>' + formattedData[i].id + '</td>  <td>' + formattedData[i].name + '</td>  <td>' + genderName + '</td>  <td>' + formattedData[i].stateName + '</td> <td>' + formattedData[i].districtName + '</td> <td><input type="button" id="btndelete" value="Delete" style="color:red;" onclick="DELETE(' + formattedData[i].id + ')" /> &nbsp;&nbsp;&nbsp;&nbsp;<input type="button" id="btnedit" value="Edit"  style="color:green" onclick="EDIT(' + formattedData[i].id + ')" /></td> </tr>');
+
+                    }
+                 }
+                 else{
+                        window.location.href = "/Customers/ErrorPage";
+                 }
+            },
+            error: function () {
+                alert('Data not found!');
+                   
+            }
+            });
+        }
+
+        // Save Data into database usring JQuery Ajax.
+        function SaveData(Name,Gender,State,District){
+            $.ajax({
+                url: '/Customers/UserInsertUpdate',
+                type: 'post',
+                data: { ID: UserId, Name: Name, GenderId: Gender, StateId:State, DistrictId:District},
+                success: function () {
+                    alert('data saved successfully !!');
+                    BindGrid();
+                    $("#btnFormX").click();
+                   
+                   
+                    
+                },
+                error: function () {
+                    alert('dataa not saved !!');
+                }
+            });
+        }
+
+        //EditData 
+        function EDIT(id) {
+            $.ajax({
+                url: '/Customers/UserEdit',
+                type: 'get',
+                data: { UserId: id },
+                async: false,
+                success: function (data) {
+                    console.log(data);
+                    $("#txtname").val(data.name);
+
+                    if (data.genderId == 1) {
+                        $('#male').prop("checked", true);
+                    }
+                    else if (data.genderId == 2) {
+                        $('#female').prop("checked", true);
+                    }
+                    $("#ddlstate").val(data.stateId);
+                    BindDistrict();
+                    $("#ddldistrict").val(data.districtId);
+
+                    UserId = id;
+                    $("#btnAdd").click();
+                },
+                error: function () {
+                    alert('data not edited !!');
+                }
+
+            });
+        }
+
+        //Delete Data
+        function DELETE(id) {
+            $.ajax({
+                url: '/Customers/UserDelete',
+                type: 'post',
+                data: { UserId: id },
+                success: function () {
+
+                    alert('data deleted Successfully!');
+                    BindGrid();
+
+                },
+                error: function () {
+                    alert('data not deleted!');
+                }
+
+            });
+        }
+
+        //Clear the form
+        function Clear() {
+            UserId = 0;
+            $("#txtname").val("");
+            $("#male").prop("checked", false);
+            $("#female").prop("checked", false);
+            $("#ddlstate").val("0");
+            $("#ddldistrict").val("0");
+
+
+        }
+
+        $("#btnFormX").click(function () {
+            Clear()
+        });
+        $("#btnFormClose").click(function () {
+            Clear()
+        });
+       
+       
+    </script>
+
+
+</body>
+</html>
